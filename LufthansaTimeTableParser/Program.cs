@@ -45,7 +45,7 @@ namespace LufthansaTimeTableParser
 
         }
 
-        public static readonly List<string> _LufthansaAircraftCode = new List<string>() { "A319", "A320", "A321", "A330", "A340", "A380", "AR1", "AR8", "AT72", "B737", "B747", "CRJ7", "CRJ9", "DH8D", "E145", "E190", "E195", "F100", "BUS", "ICE" };
+        public static readonly List<string> _LufthansaAircraftCode = new List<string>() { "A319", "A320", "A321", "A330", "A340", "A380", "AR1", "AR8", "AT72", "B737", "B747", "CRJ7", "CRJ9", "DH8D", "E145", "E190", "E195", "F100", "BUS", "ICE", "B763" };
         public static readonly List<string> _LufthansaAirlineCode = new List<string>() { "LH", "LX", "2L", "9L", "A3", "AC", "AF", "AI", "AV", "AX", "B6", "BE", "C3", "CA", "CL", "CO", "EN", "ET", "EV", "EW", "F7", "G7", "IQ", "JJ", "JP", "K2", "KM", "LG", "LO", "LY", "MS", "NH", "NI", "NZ", "OL", "OO", "OS", "OU", "OZ", "PS", "PT", "QI", "QR", "S5", "SA", "SK", "SN", "SQ", "TA", "TG", "TK", "TP", "UA", "US", "VO", "WK", "YV", "2A" };
         
         static void Main(string[] args)
@@ -183,6 +183,12 @@ namespace LufthansaTimeTableParser
                                 {
                                     // getrimde string temp value
                                     string temp_string = value.Trim();
+
+                                    // assuming C#
+                                    if (temp_string == "OS376")
+                                    {
+                                        System.Diagnostics.Debugger.Break();
+                                    }
 
                                     // New To:
                                     if (line.Replace("\"", "") == temp_string && rgxTimeZone.IsMatch(temp_string))
@@ -338,6 +344,21 @@ namespace LufthansaTimeTableParser
                                             {
                                                 x = x.Replace("Z", "");
                                                 TEMP_ToIATA = "ZWS";
+                                            }
+                                            if (temp_string.Contains("J"))
+                                            {
+                                                x = x.Replace("J", "");
+                                                TEMP_ToIATA = "JFK";
+                                            }
+                                            if (temp_string.Contains("J"))
+                                            {
+                                                x = x.Replace("J", "");
+                                                TEMP_ToIATA = "JFK";
+                                            }
+                                            if (temp_string.Contains("W"))
+                                            {
+                                                x = x.Replace("W", "");
+                                                TEMP_ToIATA = "EWR";
                                             }
                                             DateTime.TryParse(x.Trim(), out TEMP_ArrivalTime);
                                         }
