@@ -11,7 +11,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
-
 namespace LufthansaTimeTableParser
 {
     public class Program
@@ -41,20 +40,42 @@ namespace LufthansaTimeTableParser
             public Boolean FlightCodeShare;
             public Boolean FlightNextDayArrival;
             public int FlightNextDays;
-            public string FlightDuration;            
-
+            public string FlightDuration;
         }
 
-        public static readonly List<string> _LufthansaAircraftCode = new List<string>() { "A319", "A320", "A321", "A330", "A340", "A380", "AR1", "AR8", "AT72", "B737", "B747", "CRJ7", "CRJ9", "DH8D", "E145", "E190", "E195", "F100", "BUS", "ICE", "B763" };
+        public class AirportDef
+        {
+            // Auto-implemented properties. 
+            public string Letter { get; set; }
+            public string IATA { get; set; }
+        }
+
+        public static readonly List<string> _LufthansaAircraftCode = new List<string>() { "A319", "A320", "A321", "A330", "A340", "A380", "AR1", "AR8", "AT72", "B737", "B747", "CRJ7", "CRJ9", "DH8D", "E145", "E190", "E195", "F100", "BUS", "ICE", "B763", "B777", "B74H", "B733" };
         public static readonly List<string> _LufthansaAirlineCode = new List<string>() { "LH", "LX", "2L", "9L", "A3", "AC", "AF", "AI", "AV", "AX", "B6", "BE", "C3", "CA", "CL", "CO", "EN", "ET", "EV", "EW", "F7", "G7", "IQ", "JJ", "JP", "K2", "KM", "LG", "LO", "LY", "MS", "NH", "NI", "NZ", "OL", "OO", "OS", "OU", "OZ", "PS", "PT", "QI", "QR", "S5", "SA", "SK", "SN", "SQ", "TA", "TG", "TK", "TP", "UA", "US", "VO", "WK", "YV", "2A" };
-        
+        static List<AirportDef> Airports = new List<AirportDef>
+        {
+            new AirportDef { Letter = "M", IATA="MXP" },
+            new AirportDef { Letter = "L", IATA="LIN" },
+            new AirportDef { Letter = "H", IATA="LHR" },
+            new AirportDef { Letter = "C", IATA="LCY" },
+            new AirportDef { Letter = "C", IATA="LCY" }, 
+            new AirportDef { Letter = "T", IATA="TXL" }, 
+            new AirportDef { Letter = "B", IATA="BER" }, 
+            new AirportDef { Letter = "S", IATA="STR" }, 
+            new AirportDef { Letter = "Z", IATA="ZWS" }, 
+            new AirportDef { Letter = "J", IATA="JFK" }, 
+            new AirportDef { Letter = "W", IATA="EWR" },
+            new AirportDef { Letter = "N", IATA="NRT" },
+            new AirportDef { Letter = "H", IATA="HND" }            
+        };
+
         static void Main(string[] args)
         {
 
             var text = new StringBuilder();
             CultureInfo ci = new CultureInfo("en-US");
             string path = AppDomain.CurrentDomain.BaseDirectory + "data\\Lufthansa.pdf";
-            Regex rgxtime = new Regex(@"^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])(\+)?([A-Z])?$");
+            Regex rgxtime = new Regex(@"^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])(\+)?([A-Z])?(\+)?");
             Regex rgxFlightNumber = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?(\([A-Z]{2}\))?$");
             Regex rgxFlightNumberPri = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?");
             Regex rgxFlightNumberCodeShare = new Regex(@"\([A-Z]{2}\)$");
@@ -185,10 +206,10 @@ namespace LufthansaTimeTableParser
                                     string temp_string = value.Trim();
 
                                     // assuming C#
-                                    if (temp_string == "OS376")
-                                    {
-                                        System.Diagnostics.Debugger.Break();
-                                    }
+                                    //if (temp_string == "OS376")
+                                    //{
+                                    //    System.Diagnostics.Debugger.Break();
+                                    //}
 
                                     // New To:
                                     if (line.Replace("\"", "") == temp_string && rgxTimeZone.IsMatch(temp_string))
@@ -315,51 +336,15 @@ namespace LufthansaTimeTableParser
                                                 TEMP_FlightNextDays = 1;
                                                 TEMP_FlightNextDayArrival = true;
                                             }
-                                            if (x.Contains("+2"))
-                                            {
-                                                // Next day arrival
-                                                x = x.Replace("+2", "");
-                                                TEMP_FlightNextDays = 2;
-                                                TEMP_FlightNextDayArrival = true;
-                                            }
-                                            if (x.Contains("+-1"))
-                                            {
-                                                // Next day arrival
-                                                x = x.Replace("+-1", "");
-                                                TEMP_FlightNextDays = -1;
-                                                TEMP_FlightNextDayArrival = true;
-                                            }
                                             // Multiple airport places.
-                                            if (temp_string.Contains("T"))
-                                            {
-                                                x = x.Replace("T", "");
-                                                TEMP_ToIATA = "TXL";
-                                            }
-                                            if (temp_string.Contains("S"))
-                                            {
-                                                x = x.Replace("S", "");
-                                                TEMP_ToIATA = "STR";
-                                            }
-                                            if (temp_string.Contains("Z"))
-                                            {
-                                                x = x.Replace("Z", "");
-                                                TEMP_ToIATA = "ZWS";
-                                            }
-                                            if (temp_string.Contains("J"))
-                                            {
-                                                x = x.Replace("J", "");
-                                                TEMP_ToIATA = "JFK";
-                                            }
-                                            if (temp_string.Contains("J"))
-                                            {
-                                                x = x.Replace("J", "");
-                                                TEMP_ToIATA = "JFK";
-                                            }
-                                            if (temp_string.Contains("W"))
-                                            {
-                                                x = x.Replace("W", "");
-                                                TEMP_ToIATA = "EWR";
-                                            }
+                                            if (Regex.Matches(x,"[A-Z]").Count > 0) {
+                                                //Lette found replace to with different airport
+                                                string z = null;
+                                                z = Regex.Match(x,"[A-Z]").Groups[0].Value;
+                                                var item = Airports.Find(q => q.Letter == z);
+                                                TEMP_ToIATA = item.IATA;
+                                                x = x.Replace(z, "");
+                                            }                                            
                                             DateTime.TryParse(x.Trim(), out TEMP_ArrivalTime);
                                         }
                                     }
