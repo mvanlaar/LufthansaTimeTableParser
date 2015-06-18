@@ -50,15 +50,14 @@ namespace LufthansaTimeTableParser
             public string IATA { get; set; }
         }
 
-        public static readonly List<string> _LufthansaAircraftCode = new List<string>() { "A319", "A320", "A321", "A330", "A340", "A380", "AR1", "AR8", "AT72", "B737", "B747", "CRJ7", "CRJ9", "DH8D", "E145", "E190", "E195", "F100", "BUS", "ICE", "B763", "B777", "B74H", "B733" };
+        public static readonly List<string> _LufthansaAircraftCode = new List<string>() { "A319", "A320", "A321", "A330", "A340", "A380", "AR1", "AR8", "AT72", "B737", "B747", "CRJ7", "CRJ9", "DH8D", "E145", "E190", "E195", "F100", "BUS", "ICE", "B763", "B777", "B74H", "B733", "TRN" };
         public static readonly List<string> _LufthansaAirlineCode = new List<string>() { "LH", "LX", "2L", "9L", "A3", "AC", "AF", "AI", "AV", "AX", "B6", "BE", "C3", "CA", "CL", "CO", "EN", "ET", "EV", "EW", "F7", "G7", "IQ", "JJ", "JP", "K2", "KM", "LG", "LO", "LY", "MS", "NH", "NI", "NZ", "OL", "OO", "OS", "OU", "OZ", "PS", "PT", "QI", "QR", "S5", "SA", "SK", "SN", "SQ", "TA", "TG", "TK", "TP", "UA", "US", "VO", "WK", "YV", "2A" };
         static List<AirportDef> Airports = new List<AirportDef>
         {
             new AirportDef { Letter = "M", IATA="MXP" },
             new AirportDef { Letter = "L", IATA="LIN" },
             new AirportDef { Letter = "H", IATA="LHR" },
-            new AirportDef { Letter = "C", IATA="LCY" },
-            new AirportDef { Letter = "C", IATA="LCY" }, 
+            new AirportDef { Letter = "Y", IATA="LCY" },
             new AirportDef { Letter = "T", IATA="TXL" }, 
             new AirportDef { Letter = "B", IATA="BER" }, 
             new AirportDef { Letter = "S", IATA="STR" }, 
@@ -66,7 +65,9 @@ namespace LufthansaTimeTableParser
             new AirportDef { Letter = "J", IATA="JFK" }, 
             new AirportDef { Letter = "W", IATA="EWR" },
             new AirportDef { Letter = "N", IATA="NRT" },
-            new AirportDef { Letter = "H", IATA="HND" }            
+            new AirportDef { Letter = "H", IATA="HND" },
+            new AirportDef { Letter = "D", IATA="DMM" },
+            new AirportDef { Letter = "B", IATA="DMS" }
         };
 
         static void Main(string[] args)
@@ -75,10 +76,10 @@ namespace LufthansaTimeTableParser
             var text = new StringBuilder();
             CultureInfo ci = new CultureInfo("en-US");
             string path = AppDomain.CurrentDomain.BaseDirectory + "data\\Lufthansa.pdf";
-            Regex rgxtime = new Regex(@"^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])(\+)?([A-Z])?(\+)?");
-            Regex rgxFlightNumber = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?(\([A-Z]{2}\))?$");
+            Regex rgxtime = new Regex(@"^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])(\+)?([A-Z0-9])?(\+)?");
+            Regex rgxFlightNumber = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?(\([A-Z0-9]{2}\))?$");
             Regex rgxFlightNumberPri = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?");
-            Regex rgxFlightNumberCodeShare = new Regex(@"\([A-Z]{2}\)$");
+            Regex rgxFlightNumberCodeShare = new Regex(@"\([A-Z0-9]{2}\)$");
             Regex rgxIATAAirport = new Regex(@"^[A-Z]{3}$");
             Regex rgxdate1 = new Regex(@"(([0-9])|([0-2][0-9])|([3][0-1])) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
             Regex rgxFlightDay = new Regex(@"^\d+$");
@@ -158,7 +159,7 @@ namespace LufthansaTimeTableParser
                 string TEMP_FromUTC = null;
                 string TEMP_ToUTC = null;                
                 // Loop through each page of the document
-                for (var page = 6; page <= 6; page++)
+                for (var page = 6; page <= 50; page++)
                 //for (var page = 3; page <= pdfReader.NumberOfPages; page++)
                 {
 
@@ -363,7 +364,7 @@ namespace LufthansaTimeTableParser
                                             x = rgxFlightNumberCodeShare.Match(temp_string).Groups[0].Value;
                                             x = x.Replace("(", "");
                                             x = x.Replace(")", "");
-                                            TEMP_FlightOperator = x;                                          
+                                            TEMP_FlightOperator = x;
                                         }                                        
                                     }
                                     // Vliegtuig parsing                                    
