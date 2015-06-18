@@ -207,7 +207,7 @@ namespace LufthansaTimeTableParser
                                     string temp_string = value.Trim();
 
                                     // assuming C#
-                                    //if (temp_string == "OS376")
+                                    //if (temp_string == "Turin")
                                     //{
                                     //    System.Diagnostics.Debugger.Break();
                                     //}
@@ -325,6 +325,8 @@ namespace LufthansaTimeTableParser
                                             // tijd parsing                                                
                                             DateTime.TryParse(temp_string.Trim(), out TEMP_DepartTime);
                                             //DateTime.TryParseExact(temp_string, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out TEMP_DepartTime);
+                                            // Hack for TRN Aircraft and city
+                                            TEMP_Aircraftcode = null;
                                         }
                                         else
                                         {
@@ -365,7 +367,8 @@ namespace LufthansaTimeTableParser
                                             x = x.Replace("(", "");
                                             x = x.Replace(")", "");
                                             TEMP_FlightOperator = x;
-                                        }                                        
+                                        }
+                                        
                                     }
                                     // Vliegtuig parsing                                    
                                     if (_LufthansaAircraftCode.Contains(temp_string, StringComparer.OrdinalIgnoreCase))
