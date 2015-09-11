@@ -12,6 +12,8 @@ using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using System.Data.SqlClient;
 using System.Data;
+using System.IO;
+using System.Net;
 
 namespace LufthansaTimeTableParser
 {
@@ -75,15 +77,37 @@ namespace LufthansaTimeTableParser
         static void Main(string[] args)
         {
 
+            // Downlaoding latest pdf from skyteam website
+            string path = AppDomain.CurrentDomain.BaseDirectory + "data\\lufthansa.pdf";
+            string myDirdata = AppDomain.CurrentDomain.BaseDirectory + "\\data";
+            Directory.CreateDirectory(myDirdata);
+
+            Uri url = new Uri("http://dl-oim.de/download/LH_Timetable_en.pdf");
+            const string ua = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
+            const string referer = "http://www.lufthansa.com/nl/en/Timetable-to-download";
+            if (!File.Exists(path))
+            {
+                WebRequest.DefaultWebProxy = null;
+                using (System.Net.WebClient wc = new WebClient())
+                {
+                    wc.Headers.Add("user-agent", ua);
+                    wc.Headers.Add("Referer", referer);
+                    wc.Proxy = null;
+                    Console.WriteLine("Downloading latest lufthansa timetable pdf file...");
+                    wc.DownloadFile(url, path);
+                    Console.WriteLine("Download ready...");
+                }
+            }
+
             var text = new StringBuilder();
-            CultureInfo ci = new CultureInfo("en-US");
-            string path = AppDomain.CurrentDomain.BaseDirectory + "data\\Lufthansa.pdf";
+            CultureInfo ci = new CultureInfo("en-US");            
             Regex rgxtime = new Regex(@"^([0-1]?[0-9]|[2][0-3]):([0-5][0-9])(\+)?([A-Z0-9])?(\+)?");
             Regex rgxFlightNumber = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?(\([A-Z0-9]{2}\))?$");
             Regex rgxFlightNumberPri = new Regex(@"^([A-Z]{2}|[A-Z]\d|\d[A-Z])[0-9](\d{1,4})?");
             Regex rgxFlightNumberCodeShare = new Regex(@"\([A-Z0-9]{2}\)$");
             Regex rgxIATAAirport = new Regex(@"^[A-Z]{3}$");
             Regex rgxdate1 = new Regex(@"(([0-9])|([0-2][0-9])|([3][0-1])) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)");
+            Regex rgxdate2 = new Regex(@"(3[0-1]|2[0-9]|1[0-9]|0[1-9]) (Jan|JAN|Feb|FEB|Mar|MAR|Apr|APR|May|MAY|Jun|JUN|Jul|JUL|Aug|AUG|Sep|SEP|Oct|OCT|Nov|NOV|Dec|DEC) (\d{2})");
             Regex rgxFlightDay = new Regex(@"^\d+$");
             Regex rgxFlightDayExclusion = new Regex(@"^X[1234567]+");            
             Regex rgxFlightTime = new Regex(@"^([0-9]|0[0-9]|1[0-9]|2[0-3])H([0-9]|0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])M$");
@@ -99,6 +123,14 @@ namespace LufthansaTimeTableParser
             // Formaat papaier 
             // Letter		 612x792
             // A4		     595x842
+
+            var firstpage = new Rectangle(
+                        distanceInPixelsFromLeft,
+                        distanceInPixelsFromBottom,
+                        595,
+                        height);
+
+
             var left = new Rectangle(
                         distanceInPixelsFromLeft,
                         distanceInPixelsFromBottom,
@@ -131,9 +163,33 @@ namespace LufthansaTimeTableParser
 
             using (var pdfReader = new PdfReader(path))
             {
+                ITextExtractionStrategy fpstrategy = new SimpleTextExtractionStrategy();
+
+                var fpcurrentText = PdfTextExtractor.GetTextFromPage(
+                    pdfReader,
+                    1,
+                    fpstrategy);
+
+                fpcurrentText =
+                    Encoding.UTF8.GetString(Encoding.Convert(
+                        Encoding.Default,
+                        Encoding.UTF8,
+                        Encoding.Default.GetBytes(fpcurrentText)));
+
+                MatchCollection matches = rgxdate2.Matches(fpcurrentText);
+
+                string validfrom = matches[0].Value;
+                string validto = matches[1].Value;
+
+                string TEMP_PageFromIATA = null;
+                string TEMP_PageToIATA = null;
+
+                DateTime ValidFrom = DateTime.ParseExact(validfrom, "dd MMM yy", ci);
+                DateTime ValidTo = DateTime.ParseExact(validto, "dd MMM yy", ci);
+                
                 // Vaststellen valid from to date
-                DateTime ValidFrom = new DateTime(2015, 6, 8);
-                DateTime ValidTo = new DateTime(2015, 10, 24);
+                //DateTime ValidFrom = new DateTime(2015, 6, 8);
+                //DateTime ValidTo = new DateTime(2015, 10, 24);
 
                 // Vaststellen van Basics
 
