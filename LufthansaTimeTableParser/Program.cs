@@ -217,7 +217,7 @@ namespace LufthansaTimeTableParser
                 string TEMP_FromUTC = null;
                 string TEMP_ToUTC = null;                
                 // Loop through each page of the document
-                for (var page = 6; page <= 50; page++)
+                for (var page = 6; page <= pdfReader.NumberOfPages; page++)
                 //for (var page = 3; page <= pdfReader.NumberOfPages; page++)
                 {
 
@@ -273,8 +273,8 @@ namespace LufthansaTimeTableParser
                                     // New To:
                                     if (line.Replace("\"", "") == temp_string && rgxTimeZone.IsMatch(temp_string))
                                     {
-                                        TEMP_FromIATA = null;
-                                        TEMP_ToIATA = null;
+                                        //TEMP_FromIATA = null;
+                                        //TEMP_ToIATA = null;
                                         TEMP_ToUTC = null;
                                         TEMP_FromUTC = null;
                                     }
@@ -292,23 +292,35 @@ namespace LufthansaTimeTableParser
                                     // From en To
                                     if (rgxIATAAirport.Matches(temp_string).Count > 0)
                                     {
-                                        if (String.IsNullOrEmpty(TEMP_FromIATA))
+                                        if (line.Replace("\"","").Trim() == rgxIATAAirport.Match(temp_string).Groups[0].Value)
                                         {
+                                            // Only value on line is a airport then it is the from airport 
+
                                             TEMP_FromIATA = rgxIATAAirport.Match(temp_string).Groups[0].Value;                                            
                                         }
                                         else
                                         {
-                                            if (String.IsNullOrEmpty(TEMP_ToIATA) && !String.IsNullOrEmpty(TEMP_FromIATA))
+                                            if (line.Contains("®") && rgxIATAAirport.Matches(temp_string).Count > 0)
                                             {
+                                                // always to!
                                                 TEMP_ToIATA = rgxIATAAirport.Match(temp_string).Groups[0].Value;
                                             }
                                         }
+
+
+                                        //else
+                                        //{
+                                        //    if (String.IsNullOrEmpty(TEMP_ToIATA) && !String.IsNullOrEmpty(TEMP_FromIATA))
+                                        //    {
+                                        //        TEMP_ToIATA = rgxIATAAirport.Match(temp_string).Groups[0].Value;
+                                        //    }
+                                        //}
                                     }
-                                    if (temp_string == "®")
-                                    {
-                                        // New To airport.
-                                        TEMP_ToIATA = null;
-                                    }
+                                    //if (temp_string == "®")
+                                    //{
+                                    //    // New To airport.
+                                    //    TEMP_ToIATA = null;
+                                    //}
                                     // Parsing flightdays
                                     if (temp_string == "X" || rgxFlightDay.Matches(temp_string).Count > 0 || rgxFlightDayExclusion.Matches(temp_string).Count > 0)
                                     {
@@ -536,7 +548,7 @@ namespace LufthansaTimeTableParser
                         command.Connection = connection;            // <== lacking
                         command.CommandType = CommandType.StoredProcedure;
                         command.CommandText = "InsertFlight";
-                        command.Parameters.Add(new SqlParameter("@FlightSource", "Lufthansa"));
+                        command.Parameters.Add(new SqlParameter("@FlightSource", 4));
                         command.Parameters.Add(new SqlParameter("@FromIATA", CIFLights[i].FromIATA));
                         command.Parameters.Add(new SqlParameter("@ToIATA", CIFLights[i].ToIATA));
                         command.Parameters.Add(new SqlParameter("@FromDate", CIFLights[i].FromDate));
@@ -558,6 +570,9 @@ namespace LufthansaTimeTableParser
                         command.Parameters.Add(new SqlParameter("@FlightNextDayArrival", CIFLights[i].FlightNextDayArrival));
                         command.Parameters.Add(new SqlParameter("@FlightDuration", CIFLights[i].FlightDuration));
                         command.Parameters.Add(new SqlParameter("@FlightNextDays", CIFLights[i].FlightNextDays));
+                        command.Parameters.Add(new SqlParameter("@FlightNonStop", "True"));
+                        command.Parameters.Add(new SqlParameter("@FlightVia", DBNull.Value));
+
                         foreach (SqlParameter parameter in command.Parameters)
                         {
                             if (parameter.Value == null)
