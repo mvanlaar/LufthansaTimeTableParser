@@ -85,7 +85,7 @@ namespace LufthansaTimeTableParser
             Uri url = new Uri("http://dl-oim.de/download/LH_Timetable_en.pdf");
             const string ua = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0)";
             const string referer = "http://www.lufthansa.com/nl/en/Timetable-to-download";
-            if (!File.Exists(path))
+            if (File.Exists(path))
             {
                 WebRequest.DefaultWebProxy = null;
                 using (System.Net.WebClient wc = new WebClient())
@@ -281,11 +281,11 @@ namespace LufthansaTimeTableParser
 
                                     // Time Zone support for calulation of flight duration
                                     //from Timezone
-                                    if (rgxTimeZone.IsMatch(temp_string) && TEMP_FromIATA == null) {
+                                    if (rgxTimeZone.IsMatch(temp_string) && line.Replace("\"","") == temp_string) {
                                         // timezone from airport
                                         TEMP_FromUTC = rgxTimeZone.Match(temp_string).Groups[0].Value;                                        
                                     }
-                                    if (rgxTimeZone.IsMatch(temp_string) && TEMP_FromIATA != null & TEMP_ToIATA != null) {
+                                    if (rgxTimeZone.IsMatch(temp_string) && line.Contains("®")) {
                                         // timezone to airport
                                         TEMP_ToUTC = rgxTimeZone.Match(temp_string).Groups[0].Value;
                                     }                                    
