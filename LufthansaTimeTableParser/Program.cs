@@ -535,30 +535,49 @@ namespace LufthansaTimeTableParser
                                         if (!String.IsNullOrEmpty(TEMP_FromIATA) && !String.IsNullOrEmpty(TEMP_ToIATA) && TEMP_Aircraftcode != "BUS" && TEMP_Aircraftcode != "ICE")
                                         {
                                             if (TEMP_Airline == "LH") {
-                                                CIFLights.Add(new CIFLight
+                                                bool alreadyExists = CIFLights.Exists(x => x.FromIATA == TEMP_FromIATA
+                                                    && x.ToIATA == TEMP_ToIATA                                                    
+                                                    && x.FlightNumber == TEMP_FlightNumber
+                                                    && x.FlightMonday == TEMP_FlightMonday
+                                                    && x.FlightTuesday == TEMP_FlightTuesday
+                                                    && x.FlightWednesday == TEMP_FlightWednesday
+                                                    && x.FlightThursday == TEMP_FlightThursday
+                                                    && x.FlightFriday == TEMP_FlightFriday
+                                                    && x.FlightSaterday == TEMP_FlightSaterday
+                                                    && x.FlightSunday == TEMP_FlightSunday);
+
+                                                if (alreadyExists)
                                                 {
-                                                    FromIATA = TEMP_FromIATA,
-                                                    ToIATA = TEMP_ToIATA,
-                                                    FromDate = ValidFrom,
-                                                    ToDate = ValidTo,
-                                                    ArrivalTime = TEMP_ArrivalTime,
-                                                    DepartTime = TEMP_DepartTime,
-                                                    FlightAircraft = TEMP_Aircraftcode,
-                                                    FlightAirline = TEMP_Airline,
-                                                    FlightMonday = TEMP_FlightMonday,
-                                                    FlightTuesday = TEMP_FlightTuesday,
-                                                    FlightWednesday = TEMP_FlightWednesday,
-                                                    FlightThursday = TEMP_FlightThursday,
-                                                    FlightFriday = TEMP_FlightFriday,
-                                                    FlightSaterday = TEMP_FlightSaterday,
-                                                    FlightSunday = TEMP_FlightSunday,
-                                                    FlightNumber = TEMP_FlightNumber,
-                                                    FlightOperator = TEMP_FlightOperator,
-                                                    FlightDuration = TEMP_DurationTime.ToString().Replace("-", ""),
-                                                    FlightCodeShare = TEMP_FlightCodeShare,
-                                                    FlightNextDayArrival = TEMP_FlightNextDayArrival,
-                                                    FlightNextDays = TEMP_FlightNextDays
-                                                });
+                                                    Console.WriteLine("Flight Already found...");
+                                                }
+                                                else
+                                                {
+
+                                                    CIFLights.Add(new CIFLight
+                                                    {
+                                                        FromIATA = TEMP_FromIATA,
+                                                        ToIATA = TEMP_ToIATA,
+                                                        FromDate = ValidFrom,
+                                                        ToDate = ValidTo,
+                                                        ArrivalTime = TEMP_ArrivalTime,
+                                                        DepartTime = TEMP_DepartTime,
+                                                        FlightAircraft = TEMP_Aircraftcode,
+                                                        FlightAirline = TEMP_Airline,
+                                                        FlightMonday = TEMP_FlightMonday,
+                                                        FlightTuesday = TEMP_FlightTuesday,
+                                                        FlightWednesday = TEMP_FlightWednesday,
+                                                        FlightThursday = TEMP_FlightThursday,
+                                                        FlightFriday = TEMP_FlightFriday,
+                                                        FlightSaterday = TEMP_FlightSaterday,
+                                                        FlightSunday = TEMP_FlightSunday,
+                                                        FlightNumber = TEMP_FlightNumber,
+                                                        FlightOperator = TEMP_FlightOperator,
+                                                        FlightDuration = TEMP_DurationTime.ToString().Replace("-", ""),
+                                                        FlightCodeShare = TEMP_FlightCodeShare,
+                                                        FlightNextDayArrival = TEMP_FlightNextDayArrival,
+                                                        FlightNextDays = TEMP_FlightNextDays
+                                                    });
+                                                }
                                             }
                                         }
                                         // Cleaning All but From and To 
@@ -711,6 +730,46 @@ namespace LufthansaTimeTableParser
                 }
             }
 
+            using (var gtfscalendar = new StreamWriter(@"gtfs\\calendar.txt"))
+            {
+                // Route record
+                var csvcalendar = new CsvWriter(gtfscalendar);
+                csvcalendar.Configuration.Delimiter = ",";
+                csvcalendar.Configuration.Encoding = Encoding.UTF8;
+                csvcalendar.Configuration.TrimFields = true;
+                // header 
+                csvcalendar.WriteField("service_id");
+                csvcalendar.WriteField("monday");
+                csvcalendar.WriteField("tuesday");
+                csvcalendar.WriteField("wednesday");
+                csvcalendar.WriteField("thursday");
+                csvcalendar.WriteField("friday");
+                csvcalendar.WriteField("saturday");
+                csvcalendar.WriteField("sunday");
+                csvcalendar.WriteField("start_date");
+                csvcalendar.WriteField("end_date");
+                csvcalendar.NextRecord();
+
+                var calendar = CIFLights.Select(m => new { m.FromIATA, m.ToIATA, m.FlightAirline, m.FlightNumber, m.FromDate, m.ToDate, m.FlightMonday, m.FlightTuesday, m.FlightWednesday, m.FlightThursday, m.FlightFriday, m.FlightSaterday, m.FlightSunday }).Distinct().ToList();
+
+                for (int i = 0; i < calendar.Count; i++) // Loop through List with for)
+                {
+                    // Calender
+
+                    csvcalendar.WriteField(calendar[i].FromIATA + calendar[i].ToIATA + calendar[i].FlightAirline + calendar[i].FlightNumber.Replace(" ", "") + String.Format("{0:yyyyMMdd}", calendar[i].FromDate) + String.Format("{0:yyyyMMdd}", calendar[i].ToDate) + Convert.ToInt32(calendar[i].FlightMonday) + Convert.ToInt32(calendar[i].FlightTuesday) + Convert.ToInt32(calendar[i].FlightWednesday) + Convert.ToInt32(calendar[i].FlightThursday) + Convert.ToInt32(calendar[i].FlightFriday) + Convert.ToInt32(calendar[i].FlightSaterday) + Convert.ToInt32(calendar[i].FlightSunday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightMonday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightTuesday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightWednesday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightThursday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightFriday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightSaterday));
+                    csvcalendar.WriteField(Convert.ToInt32(calendar[i].FlightSunday));
+                    csvcalendar.WriteField(String.Format("{0:yyyyMMdd}", calendar[i].FromDate));
+                    csvcalendar.WriteField(String.Format("{0:yyyyMMdd}", calendar[i].ToDate));
+                    csvcalendar.NextRecord();
+                }
+            }           
+
             // stops.txt
 
             List<string> agencyairportsiata =
@@ -725,7 +784,7 @@ namespace LufthansaTimeTableParser
                 csvstops.Configuration.Delimiter = ",";
                 csvstops.Configuration.Encoding = Encoding.UTF8;
                 csvstops.Configuration.TrimFields = true;
-                // header                                 
+                // header
                 csvstops.WriteField("stop_id");
                 csvstops.WriteField("stop_name");
                 csvstops.WriteField("stop_desc");
@@ -737,8 +796,6 @@ namespace LufthansaTimeTableParser
 
                 for (int i = 0; i < agencyairportsiata.Count; i++) // Loop through List with for)
                 {
-
-
                     //int result1 = IATAAirports.FindIndex(T => T.stop_id == 9458)
                     var airportinfo = IATAAirports.Find(q => q.stop_iata == agencyairportsiata[i]);
                     csvstops.WriteField(airportinfo.stop_iata);
@@ -753,8 +810,7 @@ namespace LufthansaTimeTableParser
             }
 
             Console.WriteLine("Creating GTFS File trips.txt and stop_times.txt...");
-            using (var gtfscalendar = new StreamWriter(@"gtfs\\calendar.txt"))
-            {
+            
                 using (var gtfstrips = new StreamWriter(@"gtfs\\trips.txt"))
                 {
                     using (var gtfsstoptimes = new StreamWriter(@"gtfs\\stop_times.txt"))
@@ -794,22 +850,7 @@ namespace LufthansaTimeTableParser
                         csvtrips.WriteField("bikes_allowed ");
                         csvtrips.NextRecord();
 
-                        var csvcalendar = new CsvWriter(gtfscalendar);
-                        csvcalendar.Configuration.Delimiter = ",";
-                        csvcalendar.Configuration.Encoding = Encoding.UTF8;
-                        csvcalendar.Configuration.TrimFields = true;
-                        // header 
-                        csvcalendar.WriteField("service_id");
-                        csvcalendar.WriteField("monday");
-                        csvcalendar.WriteField("tuesday");
-                        csvcalendar.WriteField("wednesday");
-                        csvcalendar.WriteField("thursday");
-                        csvcalendar.WriteField("friday");
-                        csvcalendar.WriteField("saturday");
-                        csvcalendar.WriteField("sunday");
-                        csvcalendar.WriteField("start_date");
-                        csvcalendar.WriteField("end_date");
-                        csvcalendar.NextRecord();
+                        
 
                         //1101 International Air Service
                         //1102 Domestic Air Service
@@ -818,21 +859,6 @@ namespace LufthansaTimeTableParser
 
                         for (int i = 0; i < CIFLights.Count; i++) // Loop through List with for)
                         {
-
-                            // Calender
-
-                            csvcalendar.WriteField(CIFLights[i].FromIATA + CIFLights[i].ToIATA + CIFLights[i].FlightAirline + CIFLights[i].FlightNumber.Replace(" ", "") + String.Format("{0:yyyyMMdd}", CIFLights[i].FromDate) + String.Format("{0:yyyyMMdd}", CIFLights[i].ToDate) + Convert.ToInt32(CIFLights[i].FlightMonday) + Convert.ToInt32(CIFLights[i].FlightTuesday) + Convert.ToInt32(CIFLights[i].FlightWednesday) + Convert.ToInt32(CIFLights[i].FlightThursday) + Convert.ToInt32(CIFLights[i].FlightFriday) + Convert.ToInt32(CIFLights[i].FlightSaterday) + Convert.ToInt32(CIFLights[i].FlightSunday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightMonday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightTuesday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightWednesday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightThursday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightFriday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightSaterday));
-                            csvcalendar.WriteField(Convert.ToInt32(CIFLights[i].FlightSunday));
-                            csvcalendar.WriteField(String.Format("{0:yyyyMMdd}", CIFLights[i].FromDate));
-                            csvcalendar.WriteField(String.Format("{0:yyyyMMdd}", CIFLights[i].ToDate));
-                            csvcalendar.NextRecord();
-
                             // Trips
 
                             //var item4 = _Airlines.Find(q => q.Name == CIFLights[i].FlightAirline);
@@ -856,24 +882,24 @@ namespace LufthansaTimeTableParser
                             csvstoptimes.WriteField(CIFLights[i].FromIATA + CIFLights[i].ToIATA + CIFLights[i].FlightAirline + CIFLights[i].FlightNumber.Replace(" ", "") + String.Format("{0:yyyyMMdd}", CIFLights[i].FromDate) + String.Format("{0:yyyyMMdd}", CIFLights[i].ToDate) + Convert.ToInt32(CIFLights[i].FlightMonday) + Convert.ToInt32(CIFLights[i].FlightTuesday) + Convert.ToInt32(CIFLights[i].FlightWednesday) + Convert.ToInt32(CIFLights[i].FlightThursday) + Convert.ToInt32(CIFLights[i].FlightFriday) + Convert.ToInt32(CIFLights[i].FlightSaterday) + Convert.ToInt32(CIFLights[i].FlightSunday));
                             csvstoptimes.WriteField(String.Format("{0:HH:mm:ss}", CIFLights[i].DepartTime));
                             csvstoptimes.WriteField(String.Format("{0:HH:mm:ss}", CIFLights[i].DepartTime));
-                            csvstoptimes.WriteField(FromAirportInfo.stop_city);
+                            csvstoptimes.WriteField(CIFLights[i].FromIATA);
                             csvstoptimes.WriteField("0");
-                            csvstoptimes.WriteField("");
+                            csvstoptimes.WriteField(FromAirportInfo.stop_city);
                             csvstoptimes.WriteField("0");
                             csvstoptimes.WriteField("0");
                             csvstoptimes.WriteField("");
                             csvstoptimes.WriteField("");
                             csvstoptimes.NextRecord();
                             // Arrival Record
-                            if (CIFLights[i].DepartTime.TimeOfDay < System.TimeSpan.Parse("23:59:59") && CIFLights[i].ArrivalTime.TimeOfDay > System.TimeSpan.Parse("00:00:00"))
+                            if (!CIFLights[i].FlightNextDayArrival)
                             //if (!CIFLights[i].FlightNextDayArrival)
                             {
                                 csvstoptimes.WriteField(CIFLights[i].FromIATA + CIFLights[i].ToIATA + CIFLights[i].FlightAirline + CIFLights[i].FlightNumber.Replace(" ", "") + String.Format("{0:yyyyMMdd}", CIFLights[i].FromDate) + String.Format("{0:yyyyMMdd}", CIFLights[i].ToDate) + Convert.ToInt32(CIFLights[i].FlightMonday) + Convert.ToInt32(CIFLights[i].FlightTuesday) + Convert.ToInt32(CIFLights[i].FlightWednesday) + Convert.ToInt32(CIFLights[i].FlightThursday) + Convert.ToInt32(CIFLights[i].FlightFriday) + Convert.ToInt32(CIFLights[i].FlightSaterday) + Convert.ToInt32(CIFLights[i].FlightSunday));
                                 csvstoptimes.WriteField(String.Format("{0:HH:mm:ss}", CIFLights[i].ArrivalTime));
                                 csvstoptimes.WriteField(String.Format("{0:HH:mm:ss}", CIFLights[i].ArrivalTime));
-                                csvstoptimes.WriteField(ToAirportInfo.stop_city);
+                                csvstoptimes.WriteField(CIFLights[i].ToIATA);
                                 csvstoptimes.WriteField("2");
-                                csvstoptimes.WriteField("");
+                                csvstoptimes.WriteField(ToAirportInfo.stop_city);
                                 csvstoptimes.WriteField("0");
                                 csvstoptimes.WriteField("0");
                                 csvstoptimes.WriteField("");
@@ -891,9 +917,9 @@ namespace LufthansaTimeTableParser
                                 csvstoptimes.WriteField(CIFLights[i].FromIATA + CIFLights[i].ToIATA + CIFLights[i].FlightAirline + CIFLights[i].FlightNumber.Replace(" ", "") + String.Format("{0:yyyyMMdd}", CIFLights[i].FromDate) + String.Format("{0:yyyyMMdd}", CIFLights[i].ToDate) + Convert.ToInt32(CIFLights[i].FlightMonday) + Convert.ToInt32(CIFLights[i].FlightTuesday) + Convert.ToInt32(CIFLights[i].FlightWednesday) + Convert.ToInt32(CIFLights[i].FlightThursday) + Convert.ToInt32(CIFLights[i].FlightFriday) + Convert.ToInt32(CIFLights[i].FlightSaterday) + Convert.ToInt32(CIFLights[i].FlightSunday));
                                 csvstoptimes.WriteField(hour + ":" + strminute + ":00");
                                 csvstoptimes.WriteField(hour + ":" + strminute + ":00");
-                                csvstoptimes.WriteField(ToAirportInfo.stop_city);
+                                csvstoptimes.WriteField(CIFLights[i].ToIATA);
                                 csvstoptimes.WriteField("2");
-                                csvstoptimes.WriteField("");
+                                csvstoptimes.WriteField(ToAirportInfo.stop_city);
                                 csvstoptimes.WriteField("0");
                                 csvstoptimes.WriteField("0");
                                 csvstoptimes.WriteField("");
@@ -902,7 +928,7 @@ namespace LufthansaTimeTableParser
                             }
                         }
                     }
-                }
+                
             }
             // Create Zip File
             string startPath = gtfsDir;
