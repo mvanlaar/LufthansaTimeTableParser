@@ -905,8 +905,8 @@ namespace LufthansaTimeTableParser
                 }
             }
             // Create Zip File
-            string startPath = myDir;
-            string zipPath = gtfsDir + "\\LuftHansa.zip";
+            string startPath = gtfsDir;
+            string zipPath = myDir + "\\LuftHansa.zip";
             if (File.Exists(zipPath)) { File.Delete(zipPath); }
             ZipFile.CreateFromDirectory(startPath, zipPath, CompressionLevel.Fastest, false);
 
